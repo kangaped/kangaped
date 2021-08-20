@@ -1,0 +1,55 @@
+create table Customer(
+	CustomerID char(5) not null primary key,
+	CustomerName varchar(50) not null,
+	CustomerGender varchar(10),
+	CustomerPhone varchar(13),
+	CustomerAddress varchar(100),
+	Constraint cekCustomerID check(CustomerID like 'CU[0-9][0-9][0-9]'),
+	constraint cekCustomerGender check(CustomerGender = 'Male' or CustomerGender = 'Female')
+);
+
+create table Staff(
+	StaffID char(5) not null primary key,
+	StaffName varchar(50) not null,
+	StaffGender varchar(10),
+	StaffPhone varchar(13),
+	StaffAddress varchar(100),
+	StaffSalary numeric(11,2),
+	StaffPosition varchar(20),
+	constraint cekStaffID check(StaffID like 'SF[0-9][0-9][0-9]'),
+	constraint cekStaffGender check(StaffGender = 'Male' or StaffGender = 'Female')
+);
+
+
+create table ItemType(
+	ItemTypeID CHAR(5) not null primary key,
+	ItemTypeName varchar(50) not null,
+	constraint cekItemID check(ItemTypeID like 'IT[0-9][0-9][0-9]'),
+);
+
+
+create table Item(
+	ItemID char(5) not null primary key,
+	ItemTypeID char(5) references ItemType on update cascade on delete cascade,
+	ItemName varchar(15) not null,
+	Price numeric(11,2),
+	Quantity integer,
+	constraint cekIDItem check(ItemID like 'IM[0-9][0-9][0-9]')
+);
+
+create table HeaderSellTransaction(
+	TransactionId char(5) primary key,
+	CustomerId char(5) references Customer on update cascade on delete cascade,
+	StaffId char(5) references Staff on update cascade on delete cascade,
+	TransactionDate date,
+	PaymentType Varchar(20),
+	constraint cekIDTrans check (TransactionId like 'TR[0-9][0-9][0-9]')
+);
+
+
+create table DetailSellTransaction(
+	TransactionId CHAR(5) references HeaderSellTransaction on update cascade on delete cascade,
+	ItemId char(5) references Item on update cascade on delete cascade,
+	SellQuantity integer
+	Primary key(TransactionId, ItemId)
+);
