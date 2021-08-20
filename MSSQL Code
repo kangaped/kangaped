@@ -1,0 +1,237 @@
+use eCommerce
+
+select * from Staff;
+select * from Customer;
+select * from DetailSellTransaction;
+select * from HeaderSellTransaction;
+select * from ItemType;
+select * from Item;
+
+Select StaffID as [Nomor ID],
+StaffName as Nama,
+[Gender] = left(StaffGender,1),
+StaffPhone as [No HP]
+from Staff;
+
+
+--Substring mengambil nama depan dari kolom NAMA.
+--Substring pada umumnya akan mengambil nama berdasarkan mulai dari kolom berapa hingga kolom berapa.
+--substring (nama kolom, mulai dari char ke berapa, hingga char berapa)
+
+select [coba substring] = substring(StaffName, 1, 6)
+from Staff;
+
+--Namun hasilnya masih ada yang terpotong. Jadi gunakan fungsi CHARINDEX() untuk memotong hasilnya di bagian spasi
+--substring (nama kolom, mulai dari char ke berapa, FUNGSI('apa yang dicari', dari field mana);
+
+select [coba char index] = substring(StaffName, 0, CHARINDEX(' ', StaffName))
+from Staff;
+
+--atau 
+
+select [coba char index] = substring(StaffName, 1, Charindex(' ', StaffName)-1)
+from Staff;
+
+-- hasilnya yang akan diambil adalah huruf depannya saja.
+
+
+
+--Math function
+--Max
+select * from Staff;
+select 
+[Gaji Terbesar] = max(StaffSalary)
+from Staff;
+
+--MIN
+select [Gaji Terkecil] = min(StaffName)
+from Staff;
+
+--Date Function
+--Datename --> Datename(interval, Nama Field nya)
+--Interval --> Day (Tanggal), Weekday (Hari), Month, Year
+Select datename(weekday, TransactionDate) from HeaderSellTransaction;
+
+
+--Date Diff --> Mengecek selisih dari tanggal
+--Datediff(interval, tanggal pertama, tanggal kedua)
+select * from HeaderSellTransaction;
+Select DATEDIFF(year, '1945','2021') from HeaderSellTransaction;
+
+--Date Add --> Menambahkan tanggal
+--Dateadd(interval, mau ditambah berapa, tanggal yang ditambah)
+select DATEADD(Day,3,TransactionDate) from HeaderSellTransaction;
+
+--Advance Select
+--CAST --> Mengkonversi tipe data menjadi tipe data lain TANPA merubah database nya.
+--Cast --> CAST(NAMA KOLOM AS tipe data yang diinginkan)
+select * from Staff;
+select [Settle Date] = 'RP' + Cast(StaffSalary as varchar) from Staff;
+
+select StaffID, StaffName, StaffGender, 
+[StaffPhone] = '62' + substring(StaffPhone, 2, 13) from Staff;
+
+
+--CONVERT
+--Untuk mengubah tipe data yang diinginkan juga.
+--BLOK Convert nya, lalu tekan F1. Pada bagian bawah ada kode OUTPUT. Isi bagian kode tujuan dengan WITH CENTURY
+--ATAU WITHOUT CENTURY.
+--Convert --> CONVERT(tipe data yang diinginkan, nama kolom, kode tujuan)
+Select * from HeaderSellTransaction;
+
+select [Settle Date] = convert(varchar,TransactionDate,112) from HeaderSellTransaction;
+
+
+
+--DML Operation INSERT
+--Di MySQL ada 3 hal yang perlu diketahui sebelum memulai operasi. Sebelum memulai operasi perlu digunakan
+--yang namanya TRANSACTION
+--TRANSACTION sendiri fungsinya sebagai penanda jika suatu operasi manipulasi data (bisa delete, update, insert)
+--akan dilakukan. 
+
+BEGIN TRANSACTION;
+--Fungsinya sebagai penanda jika transaksi akan dimulai.
+--Ada juga yang namanya ROLLBACK dan COMMIT
+--ROLLBACK TRAN fungsinya sama dengan "undo". Jika suatu perintah sudah dieksekusi, maka jika menggunakan ROLLBACK
+--perintah tersebut akan dikembalikan seperti sebelum dijalankan.
+--kemudian COMMIT TRAN berfungsi sebagai melakukan save ketika perintah sudah dijalankan.
+
+BEGIN TRANSACTION;
+INSERT INTO Customer VALUES ('CU090','Jean Doe','Female','08657767','Jalan Bunga');
+select * from Customer;
+ROLLBACK TRAN;
+select * from Customer;
+INSERT INTO Customer VALUES ('CU006','Alex','Male','0856227227227','Jalan Pohon');
+
+
+
+
+--JOIN 
+Select [Nama Pelanggan] = CustomerName, TransactionDate
+from 
+Customer cs, 
+HeaderSellTransaction hst
+where
+cs.CustomerID = hst.CustomerId and 
+DATENAME (day,TransactionDate) = 21;
+
+--Latihan
+--Mengubah customer name menjadi nama pertama dari tabel customer Name. Dimana yang dirubah hanya orang yang
+--bertransaksi pada tanggal 21. Kemudian tampilkan seluruh data dari Customer.
+--Kemudian kembalikan data seperti semula (JANGAN DI SAVE)
+
+select * from Customer;
+select * from HeaderSellTransaction;
+
+begin transaction;
+update Customer set CustomerName = 'John Doe' from Customer cs, HeaderSellTransaction hst
+where cs.CustomerID = hst.CustomerId
+and
+cs.CustomerID = 'CU001'
+
+BEGIN TRANSACTION;
+update Customer
+set CustomerName = LEFT(CustomerName, CHARINDEX(' ', CustomerName))
+from Customer cs, HeaderSellTransaction hst
+where cs.CustomerID = hst.CustomerId
+and
+DATENAME(day, TransactionDate) = 21;
+rollback transaction
+
+
+--Untuk menentukan transaksi khusus yang mendapatkan diskon sebesar 20%
+begin transaction;
+select TransactionDate, CustomerName, ItemName, [Diskon] = 0.2 * Price, PaymentType
+from Customer cs, HeaderSellTransaction hst, DetailSellTransaction dst, Item im
+where cs.CustomerID = hst.CustomerId 
+and hst.TransactionId = dst.TransactionId 
+and dst.ItemId = im.ItemID
+and datename(day, TransactionDate) = 20;
+
+
+------------------------------------------
+-- Agregasi (MIN, MAX, COUNT, SUM, AVG, DLL)
+
+--contoh Agregat:
+--MIN
+select * from Item;
+Select [Harga Terendah] = min(Price) from Item;
+
+--MAX
+Select [Harga Tertinggi] = max(price) from Item;
+
+--rata-rata harga
+Select [Harga Rata-rata] = avg(price) from Item;
+
+--Mencari rata-rata gaji staff berdasarkan jenis kelamin nya
+select [Gender] = Left(StaffGender, 1), [Rata-rata gaji] = avg(StaffSalary)
+from Staff
+Group By StaffGender;
+
+
+-----------------------
+-- HAVING --> Where versi Agregat. HAVING dan Agregat lainnya mesti menggunakan Group By
+--Contoh
+select * from Item;
+
+select 
+ItemTypeId, [Jumlah] = sum(Quantity)
+from Item group by ItemTypeID having sum(Quantity) > 100
+
+
+
+--------------------------------------------
+
+--SubQuery
+--Ada query didalam query
+
+select * from Staff where StaffID in (
+	Select StaffID
+	From Staff
+	Where StaffSalary < 7000000
+);
+
+---------------------------------------------
+
+--EXIST
+--Kalau exist adalah operator untuk mengetahui apakah subquery mengembalikan sesuatu.
+
+select * from Staff where EXISTS(
+	Select StaffID
+	Where StaffSalary < 7000000
+);
+
+--------------------------------------------
+--Alias subquery
+--subquery yang dijadikan sebuah alias.
+
+select ItemName, Price
+From Item, 
+(Select [Rata2] = avg(Price) from Item) as tt
+where price > tt.Rata2;
+
+
+
+-----------------------------------------
+
+--View Table --> Membuat tabel virtual
+--Tabel virtual difungsikan salah satu bentuk keamanan sehingga user tidak langsung akses ke tabel asli.
+
+select * from Staff;
+--Menggunakan View
+create view [Nama Staff] as 
+select 
+StaffID as [ID], StaffName as [Nama Staff], StaffPhone as [Nomor Hp], StaffPosition as [Jabatan]
+From Staff;
+--Untuk memanggil nama staff
+select * from [Nama Staff];
+
+--Alter View = Untuk merubah value, nama Tabel atau isi query dari virtual tabel.
+Alter view [Nama Staff] as
+Select 
+[Nama Depan] = Left(StaffName, CHARINDEX(' ', StaffName)-1),
+[Nama Belakang] = Substring(StaffName, CHARINDEX(' ',StaffName)+1,LEN(StaffName)),
+StaffPhone as [Nomor Hp], StaffPosition as [Jabatan]
+From Staff;
+
+select * from [Nama Staff];
